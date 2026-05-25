@@ -1,27 +1,42 @@
 # MyApp
 
-Aplicativo iOS de contador construído com SwiftUI. Inclui pipeline completo
-de CI/CD com GitHub Actions rodando em macOS, com build para simulador e
-deploy automático para TestFlight.
+Aplicativo Android de contador construído com Kotlin + Jetpack Compose.
+Build automatizado com GitHub Actions rodando em Ubuntu.
 
 ---
 
 ## Requisitos
 
-- Xcode 16+
-- iOS 17+
-- Swift 5.0
-- Conta no Apple Developer Program (para deploy ao TestFlight)
+- Android Studio (qualquer versão recente)
+- Android 8.0+ (API 26+) para rodar no device
 
 ---
 
-## Como abrir localmente
+## Como rodar localmente
 
-```bash
-open MyApp.xcodeproj
-```
+### No emulador (Windows/Mac/Linux)
 
-Selecione um simulador iPhone na barra de targets do Xcode e pressione ▶.
+1. Instale o [Android Studio](https://developer.android.com/studio)
+2. Abra a pasta `my-first-app` no Android Studio
+3. Aguarde o sync do Gradle
+4. Menu → Tools → Device Manager → crie um emulador (ex: Pixel 8, API 35)
+5. Pressione ▶
+
+### No seu Android (cabo USB)
+
+1. No celular: **Configurações → Sobre o telefone → toque 7x em "Número da versão"**
+   (ativa o Modo Desenvolvedor)
+2. **Configurações → Opções do desenvolvedor → Depuração USB → ativar**
+3. Conecte o cabo USB
+4. No Android Studio, selecione seu dispositivo na barra de targets
+5. Pressione ▶
+
+### Instalar o APK diretamente (sem Android Studio)
+
+Após o build no GitHub Actions, baixe o artefato `MyApp-debug.apk` e:
+- Transfira para o celular (cabo, WhatsApp, Google Drive, etc.)
+- No celular, abra o arquivo e instale
+- Se pedir permissão para "instalar apps desconhecidos", autorize
 
 ---
 
@@ -29,85 +44,42 @@ Selecione um simulador iPhone na barra de targets do Xcode e pressione ▶.
 
 ### Workflow 1 — Auto Pull Request
 
-[.github/workflows/auto-pr.yml](.github/workflows/auto-pr.yml) — abre PRs
-automaticamente a cada push:
+[.github/workflows/auto-pr.yml](.github/workflows/auto-pr.yml)
+
+Antes de usar, habilite no repositório:
+```
+Settings → Actions → General → Workflow permissions
+  ● Read and write permissions
+  ☑ Allow GitHub Actions to create and approve pull requests
+```
 
 | Push em | Abre PR para |
 |---------|-------------|
 | Qualquer branch (exceto `develop` e `main`) | `develop` |
 | `develop` | `main` |
 
-O workflow verifica se já existe um PR aberto antes de criar, evitando
-duplicatas em pushes subsequentes.
+### Workflow 2 — Android Build
 
-### Workflow 2 — iOS Build & Deploy
+[.github/workflows/android-build.yml](.github/workflows/android-build.yml)
 
-[.github/workflows/ios-build.yml](.github/workflows/ios-build.yml) — compila
-e distribui o app:
-
-**Job 1 — Build (Simulador)** — roda em todo push e PR.
+Roda em todo push e PR. Compila o APK de debug e publica como artefato.
 
 ```
-Runner: macos-15
-SDK: iphonesimulator
-Signing: CODE_SIGNING_ALLOWED=NO
-Artefato: MyApp.app (simulador) — retido por 7 dias
-```
-
-**Job 2 — Deploy to TestFlight** — roda somente em push para `main`, após o Job 1 passar.
-
-```
-Runner: macos-15
-SDK: iphoneos (device real)
-Signing: certificado Apple Distribution + provisioning profile
-Destino: TestFlight via App Store Connect API
+Runner:   ubuntu-latest (sem necessidade de macOS)
+Build:    gradle assembleDebug
+Artefato: app-debug.apk — retido por 7 dias
 ```
 
 ### Fluxo completo
 
 ```
 feature/xyz ──push──▶ PR automático → develop
-                      build simulador (validação)
+                      build APK (validação)
 
 develop ──merge──▶ PR automático → main
-                   build simulador + deploy TestFlight (develop)
+                   build APK
 
-main ──merge──▶ build simulador + deploy TestFlight (release)
-```
-
----
-
-## Configuração do Code Signing
-
-Para o deploy ao TestFlight funcionar, configure os seguintes secrets no
-repositório GitHub (`Settings → Secrets and variables → Actions`):
-
-| Secret | Descrição |
-|--------|-----------|
-| `BUILD_CERTIFICATE_BASE64` | Certificado .p12 em base64 |
-| `P12_PASSWORD` | Senha do .p12 |
-| `BUILD_PROVISION_PROFILE_BASE64` | Provisioning profile .mobileprovision em base64 |
-| `KEYCHAIN_PASSWORD` | Senha aleatória para o keychain temporário do CI |
-| `TEAM_ID` | Apple Developer Team ID (ex: `ABC1234XYZ`) |
-| `APP_STORE_CONNECT_KEY_ID` | Key ID da API do App Store Connect |
-| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID da API do App Store Connect |
-| `APP_STORE_CONNECT_API_KEY` | Arquivo .p8 da API key em base64 |
-
-> Para instruções detalhadas de como obter cada valor, consulte o arquivo
-> `.developer` (não versionado — apenas local).
-
-### Converter arquivos para base64
-
-**macOS/Linux:**
-```bash
-base64 -i Certificates.p12 | pbcopy
-base64 -i MyApp.mobileprovision | pbcopy
-base64 -i AuthKey_KEYID.p8 | pbcopy
-```
-
-**Windows (PowerShell):**
-```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("Certificates.p12")) | Set-Clipboard
+main ──merge──▶ build APK (release candidate)
 ```
 
 ---
@@ -116,13 +88,23 @@ base64 -i AuthKey_KEYID.p8 | pbcopy
 
 ```
 my-first-app/
-├── .github/workflows/ios-build.yml   Pipeline CI/CD
-├── MyApp.xcodeproj/project.pbxproj   Projeto Xcode
-├── MyApp/
-│   ├── MyAppApp.swift                 Entry point (@main)
-│   ├── ContentView.swift              Tela do contador
-│   └── Assets.xcassets/              AppIcon e AccentColor
-├── ExportOptions.plist               Configuração do export (App Store)
+├── .github/workflows/
+│   ├── android-build.yml       Pipeline de build
+│   └── auto-pr.yml             PRs automáticos
+├── app/
+│   ├── src/main/
+│   │   ├── java/com/example/myapp/
+│   │   │   └── MainActivity.kt  Tela do contador (Jetpack Compose)
+│   │   ├── res/values/
+│   │   │   ├── strings.xml
+│   │   │   └── themes.xml
+│   │   └── AndroidManifest.xml
+│   ├── build.gradle.kts         Config do módulo app
+│   └── proguard-rules.pro
+├── gradle/wrapper/
+│   └── gradle-wrapper.properties
+├── build.gradle.kts             Config raiz do projeto
+├── settings.gradle.kts          Módulos e repositórios
 ├── .gitignore
 └── README.md
 ```
@@ -133,6 +115,7 @@ my-first-app/
 
 | Data | Alteração |
 |------|-----------|
-| 2026-05-25 | Criação inicial: app SwiftUI contador + build no simulador |
-| 2026-05-25 | Code signing completo + pipeline de deploy TestFlight |
-| 2026-05-25 | Workflow de PRs automáticos (feature→develop, develop→main) |
+| 2026-05-25 | Criação inicial como app iOS (SwiftUI) |
+| 2026-05-25 | Code signing e pipeline TestFlight (iOS) |
+| 2026-05-25 | Workflow de PRs automáticos |
+| 2026-05-25 | Migração completa para Android (Kotlin + Jetpack Compose) |

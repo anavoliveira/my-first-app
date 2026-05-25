@@ -1,50 +1,29 @@
 # Arquivo de documentação pessoal (não vai pro repositório)
 .developer
 
-# Build e artefatos locais
+# Build e artefatos
+app/build/
 build/
-DerivedData/
-*.xcarchive
-*.ipa
-*.dSYM.zip
-*.dSYM
-export/
+*.apk
+*.aab
 
-# Xcode
-*.xcuserstate
-*.xccheckout
-*.moved-aside
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-xcuserdata/
-*.xcscmblueprint
-*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+# Android Studio
+.idea/
+*.iml
+local.properties
+.gradle/
+captures/
+.externalNativeBuild/
+.cxx/
 
-# Swift Package Manager
-.build/
-.swiftpm/
+# Keystore de release (nunca commitar!)
+*.jks
+*.keystore
+keystore.properties
 
-# CocoaPods (se usar no futuro)
-Pods/
-Podfile.lock
+# Windows
+Thumbs.db
+Desktop.ini
 
 # macOS
 .DS_Store
-.AppleDouble
-.LSOverride
-._*
-.Spotlight-V100
-.Trashes
-
-# Segredos e chaves (nunca commitar!)
-*.p12
-*.mobileprovision
-*.p8
-AuthKey_*.p8
-ExportOptions.resolved.plist

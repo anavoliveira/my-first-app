@@ -1,0 +1,40 @@
+name: Android Build
+
+on:
+  push:
+    branches: [main, develop, "feature-*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # JDK 17 é exigido pelo Android Gradle Plugin 8.x
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Instala o Gradle 8.9 e habilita cache automático de dependências
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build APK debug
+        run: gradle assembleDebug
+
+      # O APK gerado fica disponível como artefato por 7 dias
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyApp-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
