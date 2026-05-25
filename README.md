@@ -27,14 +27,25 @@ Selecione um simulador iPhone na barra de targets do Xcode e pressione ▶.
 
 ## Pipeline GitHub Actions
 
-O workflow em [.github/workflows/ios-build.yml](.github/workflows/ios-build.yml)
-é ativado automaticamente em pushes para `main` e `develop`, e em pull requests
-para `main`.
+### Workflow 1 — Auto Pull Request
 
-### Job 1 — Build (Simulador)
+[.github/workflows/auto-pr.yml](.github/workflows/auto-pr.yml) — abre PRs
+automaticamente a cada push:
 
-Roda em **todo push e PR**. Compila para o simulador iOS sem code signing.
-Serve como validação rápida de que o código compila sem erros.
+| Push em | Abre PR para |
+|---------|-------------|
+| Qualquer branch (exceto `develop` e `main`) | `develop` |
+| `develop` | `main` |
+
+O workflow verifica se já existe um PR aberto antes de criar, evitando
+duplicatas em pushes subsequentes.
+
+### Workflow 2 — iOS Build & Deploy
+
+[.github/workflows/ios-build.yml](.github/workflows/ios-build.yml) — compila
+e distribui o app:
+
+**Job 1 — Build (Simulador)** — roda em todo push e PR.
 
 ```
 Runner: macos-15
@@ -43,16 +54,25 @@ Signing: CODE_SIGNING_ALLOWED=NO
 Artefato: MyApp.app (simulador) — retido por 7 dias
 ```
 
-### Job 2 — Deploy to TestFlight
-
-Roda **somente em push para `main`**, após o Job 1 passar. Assina o app com
-o certificado de distribuição e envia ao App Store Connect (fila do TestFlight).
+**Job 2 — Deploy to TestFlight** — roda somente em push para `main`, após o Job 1 passar.
 
 ```
 Runner: macos-15
 SDK: iphoneos (device real)
 Signing: certificado Apple Distribution + provisioning profile
 Destino: TestFlight via App Store Connect API
+```
+
+### Fluxo completo
+
+```
+feature/xyz ──push──▶ PR automático → develop
+                      build simulador (validação)
+
+develop ──merge──▶ PR automático → main
+                   build simulador + deploy TestFlight (develop)
+
+main ──merge──▶ build simulador + deploy TestFlight (release)
 ```
 
 ---
@@ -115,3 +135,4 @@ my-first-app/
 |------|-----------|
 | 2026-05-25 | Criação inicial: app SwiftUI contador + build no simulador |
 | 2026-05-25 | Code signing completo + pipeline de deploy TestFlight |
+| 2026-05-25 | Workflow de PRs automáticos (feature→develop, develop→main) |

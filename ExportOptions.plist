@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- method: define o destino do build.
+         "app-store" = App Store Connect / TestFlight
+         "ad-hoc"    = distribuição direta para dispositivos cadastrados
+         "development" = apenas para testes locais -->
+    <key>method</key>
+    <string>app-store</string>
+
+    <!-- destination: "upload" envia direto ao App Store Connect no export.
+         Alternativa: "export" apenas gera o .ipa localmente. -->
+    <key>destination</key>
+    <string>upload</string>
+
+    <!-- Substitua YOUR_TEAM_ID pelo seu Team ID da Apple Developer.
+         O workflow substitui automaticamente via variável de ambiente. -->
+    <key>teamID</key>
+    <string>YOUR_TEAM_ID</string>
+
+    <!-- Inclui os símbolos de debug no upload (recomendado para crash reports) -->
+    <key>uploadSymbols</key>
+    <true/>
+
+    <!-- Não faz upload de bitcode (deprecated desde Xcode 14) -->
+    <key>compileBitcode</key>
+    <false/>
+</dict>
+</plist>
